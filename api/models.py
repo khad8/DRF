@@ -1,11 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from .utils import file_uploader
 
 class Project(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
+    document= models.FileField(upload_to=file_uploader,blank=True)
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

@@ -1,5 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,8 +17,49 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 
-# Application definition
+STATIC_URL = 'https://s3.erp-beast.com/wa-academy/static'
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles") # IT SHOULD BE IGNORED BY DJANGO
 
+# MinIO Configuration Using "django-storages"
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": "SoVaSe71NqoGOpZx0uVb",
+            "secret_key": "67rGMwbYxExyicmbjyFbDw0e7zmNbuqzvc9OsGz4",
+            "bucket_name": "chikh",
+            "endpoint_url": "https://s3.erp-beast.com",
+            "region_name": None,  # MinIO does not require a region
+            "default_acl": "public-read",
+            "querystring_auth": False,  # Change to True if you want querystring authentication
+            "object_parameters": {
+                "CacheControl": "max-age=86400",
+            },
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": "SoVaSe71NqoGOpZx0uVb",
+            "secret_key": "67rGMwbYxExyicmbjyFbDw0e7zmNbuqzvc9OsGz4",
+            "bucket_name": "wa-academy",
+            "endpoint_url": "https://s3.erp-beast.com",
+            "region_name": None,
+            "default_acl": "public-read",
+            "object_parameters": {
+                "CacheControl": "max-age=86400",
+            },
+        },
+    },
+}
+
+DEFAULT_FILE_STORAGE = "storages.backends.S3Boto3Storage"
+STATICFILES_STORAGE = "storages.backends.s3.S3Storage"
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -32,16 +74,32 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
-    # all users have to be auth
+    # Force All users to be authenticated to use the ressources
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny"
+        "rest_framework.permissions.IsAuthenticated"
     ],
-    #JWT for auth
-    "DEFAULT_AUTHENTICATION_CLASSES":["rest_framework_simplejwt.authentication.JWTAuthentication",],
-    #config of response 
-    "DEFAULT_PARSER_CLASSES":["rest_framework.parsers.JSONParser","rest_framework.FormParser","rest_framework.MultiPartParser"]
+    # USE the JWT AS default
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        # Enforce the response to be JSON
+        "rest_framework.parsers.JSONParser",
+        # Use the Forms
+        "rest_framework.parsers.FormParser",
+        # Use of files / media
+        "rest_framework.parsers.MultiPartParser"
+    ]
 }
-SIMPLE_JWT={"ACCESS_TOKEN_LIFETIME":timedelta(minutes=30),"REFRESH_TOKEN_LIFETIME":timedelta(days=1),"AUTH_HEADER_TYPES":("BEARER")}
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=45),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -115,10 +173,6 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
